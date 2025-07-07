@@ -7,9 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class Menus extends Model
 {
     protected $table = 'menus';
+    protected $guarded = ['id'];
 
-    protected $fillable = [
-        // tambahkan kolom yang dapat diisi, contoh:
-        // 'name', 'description', 'price'
-    ];
 }

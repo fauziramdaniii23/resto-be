@@ -7,6 +7,7 @@ use \App\Http\Controllers\AuthController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\GoogleController;
+use App\Http\Controllers\ReservationController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -31,6 +32,8 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', [AuthController::class, 'user'])->name('get.user');
     Route::middleware(['verified'])->group(function () {
         Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
+        Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
+        Route::post('/reservation', [ReservationController::class, 'Reservation'])->name('add.reservation');
     });
     Route::post('/logout', [AuthController::class, 'logout']);
 });
