@@ -11,23 +11,29 @@ class Reservation extends Model
 
     protected $table = 'reservations';
     protected $guarded = ['id'];
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+    public function tables()
+    {
+        return $this->belongsToMany(Table::class, 'reservation_table')->withTimestamps();
+    }
 
     public static function addReservation($data)
     {
         try {
-            foreach ($data['tables'] as $table) {
                 $date = $data['date'];
                 $time = $data['time'];
                 $params = [
                     'user_id' => $data['user'],
                     'reserved_at' => Carbon::createFromFormat('Y-m-d H:i', "$date $time"),
                     'time' => $data['time'],
-                    'table_id' => $table['id'],
                     'note' => $data['note'] ?? null,
                     'status' => Status::PENDING,
                 ];
                 self::create($params);
-            }
+
         } catch (\Exception $e) {
             \Log::error("AddReservation error: " . $e->getMessage());
             throw new \Exception("AddReservation error: " . $e->getMessage());
@@ -39,10 +45,14 @@ class Reservation extends Model
             $requestDateTime = Carbon::createFromFormat('Y-m-d H:i', "{$data['date']} {$data['time']}");
             $start = $requestDateTime->copy()->subHours(2);
             $end   = $requestDateTime->copy()->addHours(2);
-            return self::where('status', Status::CONFIRMED)
+            $data=  self::where('status', Status::CONFIRMED)
                 ->whereBetween('reserved_at', [$start, $end])
-                ->pluck('table_id')
+                ->get()
                 ->toArray();
+            if($data === null) {
+                return [];
+            }
+            return $data;
         } catch (\Exception $e) {
             \Log::error("GetTablesBooked error: " . $e->getMessage());
             throw new \Exception("GetTablesBooked error: " . $e->getMessage());

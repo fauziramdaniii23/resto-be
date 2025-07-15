@@ -30,11 +30,12 @@ Route::middleware(['guest:api'])->group(function () {
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', [AuthController::class, 'user'])->name('get.user');
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::middleware(['verified'])->group(function () {
         Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
         Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
-        Route::post('/reservation', [ReservationController::class, 'Reservation'])->name('add.reservation');
+        Route::post('/reservation', [ReservationController::class, 'addReservation'])->name('add.reservation');
+        Route::get('/reservation', [ReservationController::class, 'getReservation'])->name('get.reservation');
     });
-    Route::post('/logout', [AuthController::class, 'logout']);
 });
 

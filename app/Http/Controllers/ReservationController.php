@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Constant\Status;
 use App\Helper\ApiResponse;
 use App\Models\Reservation;
-use App\Models\Tables;
+use App\Models\Table;
+use App\Repositories\ReservationRepository;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,10 +16,15 @@ use Illuminate\Validation\Rule;
 
 class ReservationController extends Controller
 {
-    public function Reservation(Request $request): JsonResponse
+    protected $reservationRepository;
+    public function __construct(ReservationRepository $reservationRepository)
+    {
+        $this->reservationRepository = $reservationRepository;
+    }
+    public function addReservation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'user' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['required', 'integer', 'exists:users,id'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
 
@@ -35,14 +41,36 @@ class ReservationController extends Controller
         }
 
         $data = $validator->validated();
+        $data['reserved_at'] = date('Y-m-d H:i:s', strtotime($data['date'] . ' ' . $data['time']));
         try {
             DB::BeginTransaction();
-            $reservation = Reservation::addReservation($data);
+            $reservation = $this->reservationRepository->addDataRepository($data);
 
             DB::commit();
             return ApiResponse::BaseResponse($reservation, 'Reservasi berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
+            $message = $e->getMessage();
+            return ApiResponse::ErrorResponse($message, $message);
+        }
+    }
+
+    public function getReservation(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'page' => 'required|integer|min:1',
+                'pageSize' => 'required|integer|min:1',
+            ]);
+            $result = $this->reservationRepository->getDataReservation(
+                $validated['page'],
+                $validated['pageSize']
+            );
+            $data = $result['data'];
+            $total = $result['total'];
+            return ApiResponse::PaginateResponse($data, $total);
+        }
+        catch (\Exception $e) {
             $message = $e->getMessage();
             return ApiResponse::ErrorResponse($message, $message);
         }
@@ -62,7 +90,7 @@ class ReservationController extends Controller
 
         $data = $validator->validated();
         try {
-            $tables = Tables::all()->makeHidden(['created_at', 'updated_at']);
+            $tables = Table::all()->makeHidden(['created_at', 'updated_at']);
             $tableBooked = Reservation::getTablesBooked($data);
 
             $tables = $tables->map(function ($table) use ($tableBooked) {
