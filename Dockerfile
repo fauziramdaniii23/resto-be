@@ -1,9 +1,8 @@
-# Gunakan image PHP + Apache
 FROM php:8.2-apache
 
 # Install dependensi sistem + ekstensi PHP
 RUN apt-get update && apt-get install -y \
-    libzip-dev unzip curl git libpng-dev libonig-dev libxml2-dev \
+    libzip-dev unzip curl git libpng-dev libonig-dev libxml2-dev libpq-dev \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip gd
 
 # Install Composer
@@ -20,7 +19,7 @@ RUN chown -R www-data:www-data /var/www/html \
 # Salin konfigurasi vhost agar support .htaccess
 COPY ./docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
-# Install dependensi Laravel (setelah semua ekstensi aktif)
+# Install dependensi Laravel
 RUN composer install --no-dev --optimize-autoloader
 
 # Jalankan artisan command (opsional)
