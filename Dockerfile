@@ -30,7 +30,6 @@ RUN php artisan route:clear && php artisan view:clear
 
 # Generate APP_KEY, migrate DB, dan install Passport
 RUN php artisan config:clear \
- && php artisan key:generate \
  && php artisan passport:install --force
 
 
