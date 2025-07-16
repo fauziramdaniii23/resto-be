@@ -26,7 +26,13 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Clear caches
-RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
+RUN php artisan route:clear && php artisan view:clear
+
+# Generate APP_KEY, migrate DB, dan install Passport
+RUN php artisan config:clear \
+ && php artisan key:generate \
+ && php artisan passport:install --force
+
 
 # Expose web port
 EXPOSE 80

@@ -9,6 +9,15 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ReservationController;
 
+Route::get('/test', function (Request $request) {
+    $user = \App\Models\User::all();
+    return response()->json([
+        'data' => $user,
+        'message' => 'API is working',
+        'status' => 'success'
+    ]);
+})->name('api.test');
+
 Route::get('/auth/google/redirect', [GoogleController::class, 'redirectToGoogle']);
 Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
