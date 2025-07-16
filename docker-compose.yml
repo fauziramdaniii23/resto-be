@@ -1,26 +1,9 @@
-version: '3.8'
-
 services:
     app:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: laravel-artisan
         ports:
-            - "8000:8000"
+            - "8000:80"
         volumes:
-            - ./app:/var/www
-        environment:
-            DB_CONNECTION: pgsql
-            DB_HOST: ep-royal-snow-a1awp46u.ap-southeast-1.aws.neon.tech
-            DB_PORT: 5432
-            DB_DATABASE: neondb
-            DB_USERNAME: neondb_owner
-            DB_PASSWORD: "endpoint=ep-royal-snow-a1awp46u$npg_7lGuKiXeZk9D"
-            DB_SSLMODE: require
-        networks:
-            - laravel
-
-networks:
-    laravel:
-        driver: bridge
+            - .:/var/www/html
