@@ -1,22 +1,32 @@
 FROM php:8.2-apache
 
+# Install PHP extensions
 RUN apt-get update && apt-get install -y \
-    unzip git curl libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql
+    unzip git curl libpq-dev libzip-dev zip \
+    && docker-php-ext-install pdo pdo_pgsql zip
+
+# Enable Apache mod_rewrite
+RUN a2enmod rewrite
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Copy source code
+COPY . .
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Set Apache document root to Laravel's public folder
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 # Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Salin semua file ke container
-COPY . /var/www/html
-
-# Atur working dir dan permission
-WORKDIR /var/www/html
-RUN chown -R www-data:www-data /var/www/html \
-    && a2enmod rewrite
-
-# Install dependensi Laravel
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
-# Jalankan artisan command (opsional)
+# Clear caches
 RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
+
+# Expose web port
+EXPOSE 80
