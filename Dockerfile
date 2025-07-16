@@ -1,9 +1,8 @@
 FROM php:8.2-apache
 
-# Install dependensi sistem + ekstensi PHP
 RUN apt-get update && apt-get install -y \
-    libzip-dev unzip curl git libpng-dev libonig-dev libxml2-dev libpq-dev \
-    && docker-php-ext-install pdo pdo_mysql pdo_pgsql zip gd
+    unzip git curl libpq-dev \
+    && docker-php-ext-install pdo pdo_pgsql
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -15,9 +14,6 @@ COPY . /var/www/html
 WORKDIR /var/www/html
 RUN chown -R www-data:www-data /var/www/html \
     && a2enmod rewrite
-
-# Salin konfigurasi vhost agar support .htaccess
-COPY ./docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 # Install dependensi Laravel
 RUN composer install --no-dev --optimize-autoloader
