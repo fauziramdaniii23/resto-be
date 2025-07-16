@@ -6,4 +6,8 @@ services:
         ports:
             - "8000:80"
         volumes:
-            - .:/var/www/html
+            - ./app:/var/www/html/app
+            - ./routes:/var/www/html/routes
+            - ./resources:/var/www/html/resources
+            # Hindari mount root Laravel langsung
+

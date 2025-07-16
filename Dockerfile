@@ -11,27 +11,27 @@ RUN a2enmod rewrite
 # Set working directory
 WORKDIR /var/www/html
 
-# Copy source code
+# Copy project files
 COPY . .
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Set Apache document root to Laravel's public folder
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+# Install Laravel dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Clear caches
-RUN php artisan route:clear && php artisan view:clear
+# Set storage permissions
+RUN chown -R www-data:www-data storage bootstrap/cache \
+ && chmod -R 755 storage bootstrap/cache
+# 1. Generate key (tanpa migrasi atau buat ulang client)
+RUN php artisan passport:keys --force \
+ && chmod 600 storage/oauth-private.key storage/oauth-public.key
 
-# Generate APP_KEY, migrate DB, dan install Passport
-RUN php artisan config:clear \
- && php artisan passport:install --force
+# Clear any cached data
+RUN php artisan config:clear && php artisan route:clear && php artisan view:clear
 
-
-# Expose web port
+# Expose Apache port
 EXPOSE 80
