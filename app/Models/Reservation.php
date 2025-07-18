@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Constant\Status;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
-
+    use SoftDeletes;
     protected $table = 'reservations';
     protected $guarded = ['id'];
 
@@ -20,26 +21,6 @@ class Reservation extends Model
     public function tables()
     {
         return $this->belongsToMany(Table::class, 'reservation_table')->withTimestamps();
-    }
-
-    public static function addReservation($data)
-    {
-        try {
-            $date = $data['date'];
-            $time = $data['time'];
-            $params = [
-                'user_id' => $data['user'],
-                'reserved_at' => Carbon::createFromFormat('Y-m-d H:i', "$date $time"),
-                'time' => $data['time'],
-                'note' => $data['note'] ?? null,
-                'status' => Status::PENDING,
-            ];
-            self::create($params);
-
-        } catch (\Exception $e) {
-            \Log::error("AddReservation error: " . $e->getMessage());
-            throw new \Exception("AddReservation error: " . $e->getMessage());
-        }
     }
 
     public static function getTablesBooked($data)

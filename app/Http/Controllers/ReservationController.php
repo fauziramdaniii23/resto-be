@@ -100,4 +100,22 @@ class ReservationController extends Controller
             return ApiResponse::ErrorResponse($message, $message);
         }
     }
+    public function deleteReservation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id' => ['required', 'integer', 'exists:reservations,id'],
+        ]);
+        try {
+            $reservation = Reservation::findOrFail($request->id);
+            $reservation->delete();
+
+            return ApiResponse::BaseResponse($reservation, 'Reservasi berhasil dihapus');
+        } catch (\Exception $e) {
+            \Log::error("DeleteReservation error: " . $e->getMessage());
+            return ApiResponse::ErrorResponse(
+                'Gagal menghapus reservasi',
+                $e->getMessage()
+            );
+        }
+    }
 }
