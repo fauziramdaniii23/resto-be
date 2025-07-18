@@ -8,7 +8,7 @@ class Status
     public const BOOKED      = 'booked';
     public const PENDING     = 'pending';
     public const CONFIRMED   = 'confirmed';
-    public const CANCELLED   = 'cancelled';
+    public const CANCELED   = 'canceled';
     public const COMPLETED   = 'completed';
     public const REJECTED    = 'rejected';
 }

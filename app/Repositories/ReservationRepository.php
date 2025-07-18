@@ -8,32 +8,60 @@ use Illuminate\Support\Facades\DB;
 
 class ReservationRepository
 {
-    public function addDataRepository(array $data)
+    public function upSertReservation(array $data)
     {
         try {
-            $reservation = Reservation::create([
-                'user_id' => $data['user_id'],
-                'reserved_at' => $data['reserved_at'],
-                'note' => $data['note'] ?? '',
-                'status' => $data['status'] ?? Status::PENDING,
-            ]);
-            $reservation->tables()->attach(
-                collect($data['tables'])->pluck('id')->toArray()
-            );
+            if (isset($data['id'])) {
+                $reservation = Reservation::findOrFail($data['id']);
+
+                $reservation->update([
+                    'user_id'     => $data['user_id'],
+                    'reserved_at' => $data['reserved_at'],
+                    'note'        => $data['note'] ?? '',
+                    'status'      => $data['status'],
+                ]);
+
+                if (isset($data['tables'])) {
+                    $reservation->tables()->sync(
+                        collect($data['tables'])->pluck('id')->toArray()
+                    );
+                }
+            } else {
+                $reservation = Reservation::create([
+                    'user_id'     => $data['user_id'],
+                    'reserved_at' => $data['reserved_at'],
+                    'note'        => $data['note'] ?? '',
+                    'status'      => $data['status'] ?? Status::PENDING,
+                ]);
+
+                if (isset($data['tables'])) {
+                    $reservation->tables()->attach(
+                        collect($data['tables'])->pluck('id')->toArray()
+                    );
+                }
+            }
+
+            return $reservation->load('tables');
         } catch (\Exception $e) {
-            \Log::error("AddDataRepository error: " . $e->getMessage());
-            throw new \Exception("AddDataRepository error: " . $e->getMessage());
+            \Log::error("upSertReservation error: " . $e->getMessage());
+            throw new \Exception("upSertReservation error: " . $e->getMessage());
         }
     }
+
     public function getDataReservation($page, $pageSize)
     {
         try {
             $offset = ($page - 1) * $pageSize;
-            $reservations = Reservation::with(['user', 'tables'])
-                ->orderByDesc('created_at')
+            $reservations = Reservation::with(['user', 'tables' => function ($query) {
+                $query->without('pivot');
+            }])
+                ->orderBy('reserved_at')
                 ->offset($offset)
                 ->limit($pageSize)
-                ->get();
+                ->get()
+                ->each(function ($reservation) {
+                    $reservation->tables->each->makeHidden('pivot');
+                });
 
             $total = Reservation::count();
             return [

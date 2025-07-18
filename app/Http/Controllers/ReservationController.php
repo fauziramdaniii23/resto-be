@@ -17,34 +17,32 @@ use Illuminate\Validation\Rule;
 class ReservationController extends Controller
 {
     protected $reservationRepository;
+
     public function __construct(ReservationRepository $reservationRepository)
     {
         $this->reservationRepository = $reservationRepository;
     }
-    public function addReservation(Request $request): JsonResponse
+
+    public function upSertReservation(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            'id' => ['nullable', 'integer', 'exists:reservations,id'],
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
-
+            'status' => ['required', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED]),],
             'tables' => ['required', 'array', 'min:1'],
             'tables.*.id' => ['required', 'integer', 'exists:tables,id'],
             'tables.*.table_number' => ['required', 'integer'],
             'tables.*.capacity' => ['required', 'integer'],
-            'tables.*.status' => ['required', Rule::in([Status::AVAILABLE])],
             'note' => ['nullable', 'string'],
         ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::ErrorResponse('Validasi gagal', $validator->errors());
-        }
-
-        $data = $validator->validated();
-        $data['reserved_at'] = date('Y-m-d H:i:s', strtotime($data['date'] . ' ' . $data['time']));
         try {
+            $data = $validator->validated();
+            $data['reserved_at'] = date('Y-m-d H:i:s', strtotime($data['date'] . ' ' . $data['time']));
             DB::BeginTransaction();
-            $reservation = $this->reservationRepository->addDataRepository($data);
+
+            $reservation = $this->reservationRepository->upSertReservation($data);
 
             DB::commit();
             return ApiResponse::BaseResponse($reservation, 'Reservasi berhasil dibuat');
@@ -69,8 +67,7 @@ class ReservationController extends Controller
             $data = $result['data'];
             $total = $result['total'];
             return ApiResponse::PaginateResponse($data, $total);
-        }
-        catch (\Exception $e) {
+        } catch (\Exception $e) {
             $message = $e->getMessage();
             return ApiResponse::ErrorResponse($message, $message);
         }
@@ -80,9 +77,9 @@ class ReservationController extends Controller
     {
         $validator = Validator::make($request->all(),
             [
-            'date' => ['required', 'date'],
-            'time' => ['required', 'date_format:H:i'],
-        ]);
+                'id_reservation' => ['nullable', 'integer', 'exists:reservations,id'],
+                'date' => ['required', 'date'],
+            ]);
 
         if ($validator->fails()) {
             return ApiResponse::ErrorResponse('Validasi gagal', $validator->errors());
@@ -91,10 +88,10 @@ class ReservationController extends Controller
         $data = $validator->validated();
         try {
             $tables = Table::all()->makeHidden(['created_at', 'updated_at']);
-            $tableBooked = Reservation::getTablesBooked($data);
+            $idTableBooked = Reservation::getTablesBooked($data);
 
-            $tables = $tables->map(function ($table) use ($tableBooked) {
-                $table->status = in_array($table->id, $tableBooked) ? 'booked' : 'available';
+            $tables = $tables->map(function ($table) use ($idTableBooked) {
+                $table->status = in_array($table->id, $idTableBooked) ? 'booked' : 'available';
                 return $table;
             });
             return ApiResponse::BaseResponse($tables);

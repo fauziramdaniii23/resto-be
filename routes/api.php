@@ -39,7 +39,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::middleware(['verified'])->group(function () {
         Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
         Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
-        Route::post('/reservation', [ReservationController::class, 'addReservation'])->name('add.reservation');
+        Route::post('/reservation', [ReservationController::class, 'upSertReservation'])->name('add.reservation');
         Route::get('/reservation', [ReservationController::class, 'getReservation'])->name('get.reservation');
     });
 });
