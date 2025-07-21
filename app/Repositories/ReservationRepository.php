@@ -48,7 +48,7 @@ class ReservationRepository
         }
     }
 
-    public function getDataReservation($page, $pageSize)
+    public function getDataReservation($page, $pageSize): array
     {
         try {
             $offset = ($page - 1) * $pageSize;
@@ -64,6 +64,35 @@ class ReservationRepository
                 });
 
             $total = Reservation::count();
+            return [
+                'data' => $reservations,
+                'total' => $total,
+                'page' => $page,
+                'pageSize' => $pageSize,
+            ];
+        }
+        catch (\Exception $e) {
+            \Log::error("GetDataReservation error: " . $e->getMessage());
+            throw new \Exception("GetDataReservation error: " . $e->getMessage());
+        }
+    }
+    public function getDataReservationCustomer( $userId ,$page, $pageSize): array
+    {
+        try {
+            $offset = ($page - 1) * $pageSize;
+            $reservations = Reservation::with(['tables' => function ($query) {
+                $query->without('pivot');
+            }])
+                ->where('user_id', $userId)
+                ->orderBy('reserved_at')
+                ->offset($offset)
+                ->limit($pageSize)
+                ->get()
+                ->each(function ($reservation) {
+                    $reservation->tables->each->makeHidden('pivot');
+                });
+
+            $total = Reservation::where('user_id', $userId)->count();
             return [
                 'data' => $reservations,
                 'total' => $total,

@@ -30,7 +30,7 @@ class ReservationController extends Controller
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
-            'status' => ['required', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED]),],
+            'status' => ['required', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED, Status::REJECTED]),],
             'tables' => ['required', 'array', 'min:1'],
             'tables.*.id' => ['required', 'integer', 'exists:tables,id'],
             'tables.*.table_number' => ['required', 'integer'],
@@ -66,7 +66,41 @@ class ReservationController extends Controller
             );
             $data = $result['data'];
             $total = $result['total'];
-            return ApiResponse::PaginateResponse($data, $total);
+            $meta = [
+                'data' => $data,
+                'page' => $result['page'],
+                'pageSize' => $result['pageSize'],
+                'total' => $total,
+            ];
+            return ApiResponse::PaginateResponse($meta);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            return ApiResponse::ErrorResponse($message, $message);
+        }
+    }
+
+    public function getReservationCustomer(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'page' => 'required|integer|min:1',
+                'pageSize' => 'required|integer|min:1',
+            ]);
+            $result = $this->reservationRepository->getDataReservationCustomer(
+                $validated['user_id'],
+                $validated['page'],
+                $validated['pageSize']
+            );
+            $data = $result['data'];
+            $total = $result['total'];
+            $meta = [
+                'data' => $data,
+                'page' => $result['page'],
+                'pageSize' => $result['pageSize'],
+                'total' => $total,
+            ];
+            return ApiResponse::PaginateResponse($meta);
         } catch (\Exception $e) {
             $message = $e->getMessage();
             return ApiResponse::ErrorResponse($message, $message);

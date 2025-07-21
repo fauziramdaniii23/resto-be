@@ -25,14 +25,13 @@ class ApiResponse
             'info' => $info
         ], $statusCode);
     }
-    public static function PaginateResponse(mixed $data, int $total ,string $info = '', int $statusCode = 200): JsonResponse
+    public static function PaginateResponse(mixed $data ,string $info = '', int $statusCode = 200): JsonResponse
     {
         return response()->json([
             'success' => true,
             'status' => $statusCode,
-            'data' => $data,
+            'meta_data' => $data,
             'info' => $info,
-            'total' => $total
         ], $statusCode);
     }
 }

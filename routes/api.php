@@ -41,6 +41,7 @@ Route::middleware(['auth:api'])->group(function () {
         Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
         Route::post('/reservation', [ReservationController::class, 'upSertReservation'])->name('add.reservation');
         Route::get('/reservation', [ReservationController::class, 'getReservation'])->name('get.reservation');
+        Route::get('/reservation-customer', [ReservationController::class, 'getReservationCustomer'])->name('get.reservation.customer');
         Route::delete('/reservation/delete', [ReservationController::class, 'deleteReservation'])->name('delete.reservation');
     });
 });
