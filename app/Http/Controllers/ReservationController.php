@@ -57,10 +57,14 @@ class ReservationController extends Controller
     {
         try {
             $validated = $request->validate([
+                'keyword' => 'nullable|string|max:255',
+                'date' => 'nullable|string|date',
                 'page' => 'required|integer|min:1',
                 'pageSize' => 'required|integer|min:1',
             ]);
             $result = $this->reservationRepository->getDataReservation(
+                $validated['keyword'] ?? null,
+                $validated['date'] ?? null,
                 $validated['page'],
                 $validated['pageSize']
             );

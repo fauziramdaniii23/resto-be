@@ -48,14 +48,29 @@ class ReservationRepository
         }
     }
 
-    public function getDataReservation($page, $pageSize): array
+    public function getDataReservation($keyword, $date, $page, $pageSize): array
     {
         try {
             $offset = ($page - 1) * $pageSize;
-            $reservations = Reservation::with(['user', 'tables' => function ($query) {
-                $query->without('pivot');
-            }])
-                ->orderBy('reserved_at')
+            $query = Reservation::with([
+                'user',
+                'tables' => fn($query) => $query->without('pivot')
+            ])
+                ->when($keyword, function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('customer_name', 'ILIKE', "%$keyword%")
+                            ->orWhere('status', 'ILIKE', "%$keyword%")
+                            ->orWhere('note', 'ILIKE', "%$keyword%")
+                            ->orWhere('remark', 'ILIKE', "%$keyword%");
+                    });
+                })
+                ->when($date, function ($query, $date) {
+                    $query->whereDate('reserved_at', $date);
+                });
+
+            $total = $query->count();
+
+            $data = $query->orderBy('reserved_at')
                 ->offset($offset)
                 ->limit($pageSize)
                 ->get()
@@ -63,9 +78,8 @@ class ReservationRepository
                     $reservation->tables->each->makeHidden('pivot');
                 });
 
-            $total = Reservation::count();
             return [
-                'data' => $reservations,
+                'data' => $data,
                 'total' => $total,
                 'page' => $page,
                 'pageSize' => $pageSize,
