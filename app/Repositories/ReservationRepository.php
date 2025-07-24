@@ -119,4 +119,28 @@ class ReservationRepository
             throw new \Exception("GetDataReservation error: " . $e->getMessage());
         }
     }
+    public function getStatusReservation(): array
+    {
+        try {
+            $statuses = [
+                'pending' => Status::PENDING,
+                'confirmed' => Status::CONFIRMED,
+                'completed' => Status::COMPLETED,
+                'canceled' => Status::CANCELED,
+                'rejected' => Status::REJECTED,
+            ];
+
+            $data = [];
+            foreach ($statuses as $key => $value) {
+                $data[] = [
+                    'status' => $key,
+                    'total' => Reservation::where('status', $value)->count()
+                ];
+            }
+            return $data;
+        } catch (\Exception $e) {
+            \Log::error("GetStatusReservation error: " . $e->getMessage());
+            throw new \Exception("GetStatusReservation error: " . $e->getMessage());
+        }
+    }
 }

@@ -111,6 +111,17 @@ class ReservationController extends Controller
         }
     }
 
+    public function getTotalStatusReservation(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->reservationRepository->getStatusReservation();
+            return ApiResponse::BaseResponse($data);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            return ApiResponse::ErrorResponse($message, $message);
+        }
+    }
+
     public function getTablesAvailable(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(),
