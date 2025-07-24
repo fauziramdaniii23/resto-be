@@ -74,7 +74,7 @@ class ReservationRepository
 
             $total = $query->count();
 
-            $data = $query->orderBy('reserved_at')
+            $data = $query->orderBy('created_at', 'desc')
                 ->offset($offset)
                 ->limit($pageSize)
                 ->get()
@@ -102,7 +102,7 @@ class ReservationRepository
                 $query->without('pivot');
             }])
                 ->where('user_id', $userId)
-                ->orderBy('reserved_at')
+                ->orderBy('created_at', 'desc')
                 ->offset($offset)
                 ->limit($pageSize)
                 ->get()
