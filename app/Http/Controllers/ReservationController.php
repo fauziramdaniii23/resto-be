@@ -27,15 +27,17 @@ class ReservationController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => ['nullable', 'integer', 'exists:reservations,id'],
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer'],
+            'customer_name' => ['required', 'string', 'max:255'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
-            'status' => ['required', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED, Status::REJECTED]),],
+            'status' => ['nullable', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED, Status::REJECTED]),],
             'tables' => ['required', 'array', 'min:1'],
             'tables.*.id' => ['required', 'integer', 'exists:tables,id'],
             'tables.*.table_number' => ['required', 'integer'],
             'tables.*.capacity' => ['required', 'integer'],
             'note' => ['nullable', 'string'],
+            'remark' => ['nullable', 'string'],
         ]);
         try {
             $data = $validator->validated();

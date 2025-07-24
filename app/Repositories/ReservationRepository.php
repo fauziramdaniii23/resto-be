@@ -15,10 +15,12 @@ class ReservationRepository
                 $reservation = Reservation::findOrFail($data['id']);
 
                 $reservation->update([
-                    'user_id'     => $data['user_id'],
+                    'user_id'     => $data['user_id'] ?? null,
+                    'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
-                    'note'        => $data['note'] ?? '',
                     'status'      => $data['status'],
+                    'note'        => $data['note'] ?? '',
+                    'remark'        => $data['remark'] ?? '',
                 ]);
 
                 if (isset($data['tables'])) {
@@ -28,10 +30,12 @@ class ReservationRepository
                 }
             } else {
                 $reservation = Reservation::create([
-                    'user_id'     => $data['user_id'],
+                    'user_id'     => $data['user_id'] ?? null,
+                    'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
-                    'note'        => $data['note'] ?? '',
                     'status'      => $data['status'] ?? Status::PENDING,
+                    'note'        => $data['note'] ?? '',
+                    'remark'        => $data['remark'] ?? '',
                 ]);
 
                 if (isset($data['tables'])) {
