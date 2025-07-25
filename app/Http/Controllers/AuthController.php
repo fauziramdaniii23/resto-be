@@ -53,7 +53,8 @@ class AuthController extends Controller
 
             $token = Crypt::encrypt($user->id);
 
-            $user->notify(new CustomVerifyEmail($token));
+            $linkVerifyUrl = config('app.frontend_url') . '/email-verification?token=' . $token;
+            Mail::to($user->email)->send(new VerifyEmail($linkVerifyUrl));
 
             return ApiResponse::BaseResponse(
                 [
