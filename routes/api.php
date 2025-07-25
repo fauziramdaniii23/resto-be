@@ -26,8 +26,8 @@ Route::middleware(['guest:api'])->group(function () {
     Route::post('/login-api', [AuthController::class, 'login'])->name('login');
     Route::post('/verify-email', [AuthController::class, 'emailVerified']);
     Route::post('/verify-email-notification', [AuthController::class, 'emailVerificationNotification']);
-    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.store');
     Route::get('/reset-password/{token}', function (Request $request, $token) {
         return redirect(config('app.frontend_url') . '/reset-password?token=' . $token. '&email=' . urlencode($request->email));
     })->name('password.reset');

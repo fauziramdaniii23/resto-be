@@ -90,11 +90,13 @@ class ReservationController extends Controller
         try {
             $validated = $request->validate([
                 'user_id' => 'required|integer|exists:users,id',
+                'keyword' => 'nullable|string|max:255',
                 'page' => 'required|integer|min:1',
                 'pageSize' => 'required|integer|min:1',
             ]);
             $result = $this->reservationRepository->getDataReservationCustomer(
                 $validated['user_id'],
+                $validated['keyword'] ?? null,
                 $validated['page'],
                 $validated['pageSize']
             );

@@ -4,14 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Helper\ApiResponse;
 use App\Http\Requests\RegisterRequest;
+use App\Mail\ForgotPasswordMail;
+use App\Mail\VerifyEmail;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use App\Repositories\AuthRepository;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -153,7 +161,8 @@ class AuthController extends Controller
 
             $token = Crypt::encrypt($user->id);
 
-            $user->notify(new CustomVerifyEmail($token));
+            $linkVerifyUrl = config('app.frontend_url') . '/email-verification?token=' . $token;
+            Mail::to($user->email)->send(new VerifyEmail($linkVerifyUrl));
 
             return ApiResponse::BaseResponse(
                 [
@@ -177,5 +186,64 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return ApiResponse::ErrorResponse($e->getMessage(), 'Terjadi kesalahan saat mengambil data pengguna');
         }
+    }
+
+    public function sendResetLink(Request $request)
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return ApiResponse::ErrorResponse('', 'User not found');
+        }
+
+        $token = Str::random(60);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'token' => Hash::make($token),
+                'created_at' => Carbon::now()
+            ]
+        );
+
+        $resetUrl = config('app.frontend_url') . '/reset-password?token=' . urlencode($token) . '&email=' . urlencode($request->email);
+
+        Mail::to($request->email)->send(new ForgotPasswordMail($resetUrl));
+        $message = 'Reset token sent to your email';
+
+        return ApiResponse::BaseResponse($message, $message);
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|min:6|confirmed',
+        ]);
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return ApiResponse::ErrorResponse('', 'User not found');
+        }
+
+        $reset = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->first();
+
+        if (!Hash::check($request->token, $reset->token)) {
+            return ApiResponse::ErrorResponse('', 'Invalid token');
+        }
+
+        if (Carbon::parse($reset->created_at)->addMinutes(60)->isPast()) {
+            return ApiResponse::ErrorResponse('', 'Token has expired');
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        $message = 'Password has been reset successfully';
+        return ApiResponse::BaseResponse($message, $message);
     }
 }

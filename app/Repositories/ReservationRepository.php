@@ -94,7 +94,7 @@ class ReservationRepository
             throw new \Exception("GetDataReservation error: " . $e->getMessage());
         }
     }
-    public function getDataReservationCustomer( $userId ,$page, $pageSize): array
+    public function getDataReservationCustomer($userId, $keyword, $page, $pageSize): array
     {
         try {
             $offset = ($page - 1) * $pageSize;
@@ -102,6 +102,14 @@ class ReservationRepository
                 $query->without('pivot');
             }])
                 ->where('user_id', $userId)
+                ->when($keyword, function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('customer_name', 'ILIKE', "%$keyword%")
+                            ->orWhere('status', 'ILIKE', "%$keyword%")
+                            ->orWhere('note', 'ILIKE', "%$keyword%")
+                            ->orWhere('remark', 'ILIKE', "%$keyword%");
+                    });
+                })
                 ->orderBy('created_at', 'desc')
                 ->offset($offset)
                 ->limit($pageSize)
