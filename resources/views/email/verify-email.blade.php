@@ -25,7 +25,7 @@
     <p style="color: #555;">If you did not create an account, no further action is required.</p>
 
     <p style="color: #999; font-size: 12px;">If you're having trouble clicking the "Verify Email" button, copy and paste the URL below into your web browser:</p>
-    <p style="word-break: break-all; color: #999; font-size: 12px;">{{ $verifyUrl }}</p>
+    <p style="word-break: break-all; color: #999; font-size: 12px;">{{ $linkUrl }}</p>
 
     <p style="color: #333; margin-top: 30px;">Regards,<br><strong>YourApp Team</strong></p>
 </div>
