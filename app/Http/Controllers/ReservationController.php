@@ -41,13 +41,28 @@ class ReservationController extends Controller
         ]);
         try {
             $data = $validator->validated();
-            $data['reserved_at'] = date('Y-m-d H:i:s', strtotime($data['date'] . ' ' . $data['time']));
+            $reservedAt = ($data['date'] . ' ' . $data['time']);
+
+            if ($data['status'] === Status::CONFIRMED) {
+                $getTableBooked = Reservation::getIdTablesBooked($reservedAt);
+
+                $findTableBooked = collect($request->tables)->filter(function ($table) use ($getTableBooked) {
+                    return in_array($table['id'], $getTableBooked);
+                })->pluck('table_number');
+                if ($findTableBooked->isNotEmpty()) {
+                    return ApiResponse::ErrorResponse(
+                        '', 'Tables ' . $findTableBooked->implode(', ') . ' have already been booked on the selected date.'
+                    );
+                }
+            }
+
+            $data['reserved_at'] = $reservedAt;
             DB::BeginTransaction();
 
             $reservation = $this->reservationRepository->upSertReservation($data);
 
             DB::commit();
-            return ApiResponse::BaseResponse($reservation, 'Reservasi berhasil dibuat');
+            return ApiResponse::BaseResponse($reservation, 'Reservation created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             $message = $e->getMessage();
@@ -140,10 +155,10 @@ class ReservationController extends Controller
 
         $data = $validator->validated();
         try {
-            $tables = Table::all()->makeHidden(['created_at', 'updated_at']);
-            $idTableBooked = Reservation::getTablesBooked($data);
+            $allTables = Table::all()->makeHidden(['created_at', 'updated_at']);
+            $idTableBooked = Reservation::getIdTablesBooked($data['date']);
 
-            $tables = $tables->map(function ($table) use ($idTableBooked) {
+            $tables = $allTables->map(function ($table) use ($idTableBooked) {
                 $table->status = in_array($table->id, $idTableBooked) ? 'booked' : 'available';
                 return $table;
             });

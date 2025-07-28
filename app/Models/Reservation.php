@@ -23,10 +23,10 @@ class Reservation extends Model
         return $this->belongsToMany(Table::class, 'reservation_table')->withTimestamps();
     }
 
-    public static function getTablesBooked($data)
+    public static function getIdTablesBooked($date)
     {
         try {
-            $requestDateTime = Carbon::parse($data['date']);
+            $requestDateTime = Carbon::parse($date);
             $start = $requestDateTime->copy()->subHours(2);
             $end = $requestDateTime->copy()->addHours(2);
             $data = self::with('tables')

@@ -11,8 +11,13 @@ class ReservationRepository
     public function upSertReservation(array $data)
     {
         try {
+            $remark = null;
             if (isset($data['id'])) {
                 $reservation = Reservation::findOrFail($data['id']);
+
+                if ($data['status'] === Status::REJECTED || $data['status'] === Status::CANCELED){
+                    $remark = $data['remark'];
+                }
 
                 $reservation->update([
                     'user_id'     => $data['user_id'] ?? null,
@@ -20,7 +25,7 @@ class ReservationRepository
                     'reserved_at' => $data['reserved_at'],
                     'status'      => $data['status'],
                     'note'        => $data['note'] ?? '',
-                    'remark'        => $data['remark'] ?? '',
+                    'remark'        => $remark,
                 ]);
 
                 if (isset($data['tables'])) {
@@ -35,7 +40,7 @@ class ReservationRepository
                     'reserved_at' => $data['reserved_at'],
                     'status'      => $data['status'] ?? Status::PENDING,
                     'note'        => $data['note'] ?? '',
-                    'remark'        => $data['remark'] ?? '',
+                    'remark'        => $remark,
                 ]);
 
                 if (isset($data['tables'])) {
