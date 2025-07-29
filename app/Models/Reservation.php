@@ -13,6 +13,11 @@ class Reservation extends Model
     protected $table = 'reservations';
     protected $guarded = ['id'];
 
+    public function isConfirmed(): bool
+    {
+        return $this->status === Status::CONFIRMED;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

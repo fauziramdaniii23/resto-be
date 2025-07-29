@@ -11,21 +11,16 @@ class ReservationRepository
     public function upSertReservation(array $data)
     {
         try {
-            $remark = null;
             if (isset($data['id'])) {
                 $reservation = Reservation::findOrFail($data['id']);
-
-                if ($data['status'] === Status::REJECTED || $data['status'] === Status::CANCELED){
-                    $remark = $data['remark'];
-                }
 
                 $reservation->update([
                     'user_id'     => $data['user_id'] ?? null,
                     'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
-                    'status'      => $data['status'],
+                    'status'      => $data['status'] === Status::CONFIRMED ? Status::PENDING : $data['status'],
                     'note'        => $data['note'] ?? '',
-                    'remark'        => $remark,
+                    'remark'        => $data['remark'] ?? '',
                 ]);
 
                 if (isset($data['tables'])) {
@@ -38,9 +33,8 @@ class ReservationRepository
                     'user_id'     => $data['user_id'] ?? null,
                     'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
-                    'status'      => $data['status'] ?? Status::PENDING,
                     'note'        => $data['note'] ?? '',
-                    'remark'        => $remark,
+                    'remark'        => $data['remark'] ?? '',
                 ]);
 
                 if (isset($data['tables'])) {
@@ -54,6 +48,25 @@ class ReservationRepository
         } catch (\Exception $e) {
             \Log::error("upSertReservation error: " . $e->getMessage());
             throw new \Exception("upSertReservation error: " . $e->getMessage());
+        }
+    }
+
+    public function updateStatusReservation(array $data)
+    {
+        $remark = null;
+        try {
+            $reservation = Reservation::findOrFail($data['id']);
+            if ($data['status'] === Status::REJECTED || $data['status'] === Status::CANCELED){
+                $remark = $data['remark'];
+            }
+            $reservation->update([
+                'status' => $data['status'],
+                'remark' => $remark,
+            ]);
+            return $reservation;
+        } catch (\Exception $e) {
+            \Log::error("updateStatusReservation error: " . $e->getMessage());
+            throw new \Exception("updateStatusReservation error: " . $e->getMessage());
         }
     }
 
@@ -79,7 +92,7 @@ class ReservationRepository
 
             $total = $query->count();
 
-            $data = $query->orderBy('created_at', 'desc')
+            $data = $query->orderBy('updated_at', 'desc')
                 ->offset($offset)
                 ->limit($pageSize)
                 ->get()
@@ -103,10 +116,9 @@ class ReservationRepository
     {
         try {
             $offset = ($page - 1) * $pageSize;
-            $reservations = Reservation::with(['tables' => function ($query) {
+            $reservations = Reservation::with(['user', 'tables' => function ($query) {
                 $query->without('pivot');
             }])
-                ->where('user_id', $userId)
                 ->when($keyword, function ($query, $keyword) {
                     $query->where(function ($q) use ($keyword) {
                         $q->where('customer_name', 'ILIKE', "%$keyword%")
@@ -114,6 +126,9 @@ class ReservationRepository
                             ->orWhere('note', 'ILIKE', "%$keyword%")
                             ->orWhere('remark', 'ILIKE', "%$keyword%");
                     });
+                })
+                ->when($userId, function ($query, $userId) {
+                    $query->where('user_id', $userId);
                 })
                 ->orderBy('created_at', 'desc')
                 ->offset($offset)

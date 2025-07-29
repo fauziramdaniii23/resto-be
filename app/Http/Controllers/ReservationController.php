@@ -13,6 +13,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use OpenApi\Annotations as OA;
+
+/**
+ * @OA\Get(
+ *     path="/api/reservations",
+ *     summary="Get list of reservation",
+ *     tags={"Reservation"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Success"
+ *     )
+ * )
+ */
 
 class ReservationController extends Controller
 {
@@ -43,6 +56,36 @@ class ReservationController extends Controller
             $data = $validator->validated();
             $reservedAt = ($data['date'] . ' ' . $data['time']);
 
+            $data['reserved_at'] = $reservedAt;
+            DB::BeginTransaction();
+
+            $reservation = $this->reservationRepository->upSertReservation($data);
+
+            DB::commit();
+            return ApiResponse::BaseResponse($reservation, 'Reservation created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $message = $e->getMessage();
+            return ApiResponse::ErrorResponse($message, $message);
+        }
+    }
+    public function updateStatusReservation(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => ['required', 'integer', 'exists:reservations,id'],
+            'date' => ['required', 'date'],
+            'time' => ['required', 'date_format:H:i'],
+            'status' => ['required', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED, Status::REJECTED])],
+            'tables' => ['required', 'array', 'min:1'],
+            'tables.*.id' => ['required', 'integer', 'exists:tables,id'],
+            'tables.*.table_number' => ['required', 'integer'],
+            'tables.*.capacity' => ['required', 'integer'],
+            'remark' => ['nullable', 'string'],
+        ]);
+        try {
+            $data = $validator->validated();
+            $reservedAt = ($data['date'] . ' ' . $data['time']);
+
             if ($data['status'] === Status::CONFIRMED) {
                 $getTableBooked = Reservation::getIdTablesBooked($reservedAt);
 
@@ -55,18 +98,16 @@ class ReservationController extends Controller
                     );
                 }
             }
+            DB::beginTransaction();
 
-            $data['reserved_at'] = $reservedAt;
-            DB::BeginTransaction();
-
-            $reservation = $this->reservationRepository->upSertReservation($data);
+            $reservation = $this->reservationRepository->updateStatusReservation($data);
 
             DB::commit();
-            return ApiResponse::BaseResponse($reservation, 'Reservation created successfully.');
+            return ApiResponse::BaseResponse($reservation, 'Reservation status updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            $message = $e->getMessage();
-            return ApiResponse::ErrorResponse($message, $message);
+            \Log::error("UpdateStatusReservation error: " . $e->getMessage());
+            return ApiResponse::ErrorResponse('Failed to update reservation status', $e->getMessage());
         }
     }
 

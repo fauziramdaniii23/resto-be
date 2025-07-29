@@ -39,11 +39,14 @@ Route::middleware(['auth:api'])->group(function () {
     Route::middleware(['verified'])->group(function () {
         Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
         Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
-        Route::post('/reservation', [ReservationController::class, 'upSertReservation'])->name('add.reservation');
-        Route::get('/reservation', [ReservationController::class, 'getReservation'])->name('get.reservation');
-        Route::get('/reservation-status', [ReservationController::class, 'getTotalStatusReservation'])->name('get.status.reservation');
-        Route::get('/reservation-customer', [ReservationController::class, 'getReservationCustomer'])->name('get.reservation.customer');
-        Route::delete('/reservation/delete', [ReservationController::class, 'deleteReservation'])->name('delete.reservation');
+        Route::prefix('reservation')->group(function () {
+            Route::get('/', [ReservationController::class, 'getReservation'])->name('reservation.index');
+            Route::get('/status', [ReservationController::class, 'getTotalStatusReservation'])->name('reservation.status');
+            Route::get('/customer', [ReservationController::class, 'getReservationCustomer'])->name('reservation.customer');
+            Route::post('/', [ReservationController::class, 'upSertReservation'])->name('reservation.store');
+            Route::post('/update-status', [ReservationController::class, 'updateStatusReservation'])->name('reservation.updateStatus');
+            Route::delete('/delete', [ReservationController::class, 'deleteReservation'])->name('reservation.delete');
+        });
     });
 });
 
