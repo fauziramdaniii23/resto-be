@@ -18,6 +18,7 @@ class ReservationRepository
                     'user_id'     => $data['user_id'] ?? null,
                     'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
+                    'guest_count' => $data['guest_count'],
                     'status'      => $data['status'] === Status::CONFIRMED ? Status::PENDING : $data['status'],
                     'note'        => $data['note'] ?? '',
                     'remark'        => $data['remark'] ?? '',
@@ -33,14 +34,14 @@ class ReservationRepository
                     'user_id'     => $data['user_id'] ?? null,
                     'customer_name' => $data['customer_name'],
                     'reserved_at' => $data['reserved_at'],
+                    'guest_count' => $data['guest_count'],
                     'note'        => $data['note'] ?? '',
                     'remark'        => $data['remark'] ?? '',
                 ]);
 
                 if (isset($data['tables'])) {
                     $reservation->tables()->attach(
-                        collect($data['tables'])->pluck('id')->toArray()
-                    );
+                        collect($data['tables'])->pluck('id')->toArray());
                 }
             }
 

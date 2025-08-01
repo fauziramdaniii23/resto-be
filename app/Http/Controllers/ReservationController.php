@@ -11,7 +11,6 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use OpenApi\Annotations as OA;
 
@@ -38,12 +37,13 @@ class ReservationController extends Controller
 
     public function upSertReservation(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'id' => ['nullable', 'integer', 'exists:reservations,id'],
             'user_id' => ['nullable', 'integer'],
             'customer_name' => ['required', 'string', 'max:255'],
-            'date' => ['required', 'date'],
+            'date' => ['required', 'date', 'after:today'],
             'time' => ['required', 'date_format:H:i'],
+            'guest_count' => ['required', 'integer', 'min:1'],
             'status' => ['nullable', Rule::in([Status::PENDING, Status::CONFIRMED, Status::CANCELED, Status::COMPLETED, Status::REJECTED]),],
             'tables' => ['required', 'array', 'min:1'],
             'tables.*.id' => ['required', 'integer', 'exists:tables,id'],
@@ -52,8 +52,8 @@ class ReservationController extends Controller
             'note' => ['nullable', 'string'],
             'remark' => ['nullable', 'string'],
         ]);
+
         try {
-            $data = $validator->validated();
             $reservedAt = ($data['date'] . ' ' . $data['time']);
 
             $data['reserved_at'] = $reservedAt;
@@ -71,7 +71,7 @@ class ReservationController extends Controller
     }
     public function updateStatusReservation(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'id' => ['required', 'integer', 'exists:reservations,id'],
             'date' => ['required', 'date'],
             'time' => ['required', 'date_format:H:i'],
@@ -82,8 +82,8 @@ class ReservationController extends Controller
             'tables.*.capacity' => ['required', 'integer'],
             'remark' => ['nullable', 'string'],
         ]);
+
         try {
-            $data = $validator->validated();
             $reservedAt = ($data['date'] . ' ' . $data['time']);
 
             if ($data['status'] === Status::CONFIRMED) {
@@ -184,17 +184,10 @@ class ReservationController extends Controller
 
     public function getTablesAvailable(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(),
-            [
-                'id_reservation' => ['nullable', 'integer', 'exists:reservations,id'],
-                'date' => ['required', 'date'],
-            ]);
-
-        if ($validator->fails()) {
-            return ApiResponse::ErrorResponse('Validasi gagal', $validator->errors());
-        }
-
-        $data = $validator->validated();
+        $data = $request->validate([
+            'id_reservation' => ['nullable', 'integer', 'exists:reservations,id'],
+            'date' => ['required', 'date'],
+        ]);
         try {
             $allTables = Table::all()->makeHidden(['created_at', 'updated_at']);
             $idTableBooked = Reservation::getIdTablesBooked($data['date']);
