@@ -69,7 +69,7 @@ class ReservationController extends Controller
             return ApiResponse::ErrorResponse($message, $message);
         }
     }
-    public function updateStatusReservation(Request $request)
+    public function updateStatusReservation(Request $request) : JsonResponse
     {
         $data = $request->validate([
             'id' => ['required', 'integer', 'exists:reservations,id'],
@@ -189,7 +189,7 @@ class ReservationController extends Controller
             'date' => ['required', 'date'],
         ]);
         try {
-            $allTables = Table::all()->makeHidden(['created_at', 'updated_at']);
+            $allTables = Table::orderBy('table_number', 'asc')->get()->makeHidden(['created_at', 'updated_at']);
             $idTableBooked = Reservation::getIdTablesBooked($data['date']);
 
             $tables = $allTables->map(function ($table) use ($idTableBooked) {
@@ -208,11 +208,14 @@ class ReservationController extends Controller
             'id' => ['required', 'integer', 'exists:reservations,id'],
         ]);
         try {
+            DB::beginTransaction();
             $reservation = Reservation::findOrFail($request->id);
             $reservation->delete();
+            DB::commit();
 
             return ApiResponse::BaseResponse($reservation, 'Reservasi berhasil dihapus');
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error("DeleteReservation error: " . $e->getMessage());
             return ApiResponse::ErrorResponse(
                 'Gagal menghapus reservasi',

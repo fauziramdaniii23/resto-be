@@ -8,6 +8,7 @@ use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\TableController;
 
 Route::get('/test', function (Request $request) {
     $user = \App\Models\User::all();
@@ -38,7 +39,15 @@ Route::middleware(['auth:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::middleware(['verified'])->group(function () {
         Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
-        Route::get('/tables', [ReservationController::class, 'getTablesAvailable'])->name('get.tables');
+        Route::get('/tables-available', [ReservationController::class, 'getTablesAvailable'])->name('get.tables.available');
+
+        Route::prefix('tables')->group(function () {
+            Route::get('/', [TableController::class, 'getTables'])->name('get.tables');
+            Route::post('/', [TableController::class, 'upSertTable'])->name('tables.store');
+            Route::delete('/delete', [TableController::class, 'deleteTable'])->name('tables.delete');
+            Route::get('/generate-number', [TableController::class, 'generateTableNumber'])->name('generate.tables.number');
+        });
+
         Route::prefix('reservation')->group(function () {
             Route::get('/', [ReservationController::class, 'getReservation'])->name('reservation.index');
             Route::get('/status', [ReservationController::class, 'getTotalStatusReservation'])->name('reservation.status');
@@ -47,6 +56,7 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/update-status', [ReservationController::class, 'updateStatusReservation'])->name('reservation.updateStatus');
             Route::delete('/delete', [ReservationController::class, 'deleteReservation'])->name('reservation.delete');
         });
+
     });
 });
 
