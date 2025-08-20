@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\GoogleController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\TableController;
+use App\Http\Controllers\CategoryController;
 
 Route::get('/test', function (Request $request) {
     $user = \App\Models\User::all();
@@ -38,7 +39,6 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/user', [AuthController::class, 'user'])->name('get.user');
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::middleware(['verified'])->group(function () {
-        Route::get('/menus', [MenusController::class, 'index'])->name('menus.index');
         Route::get('/tables-available', [ReservationController::class, 'getTablesAvailable'])->name('get.tables.available');
 
         Route::prefix('tables')->group(function () {
@@ -55,6 +55,15 @@ Route::middleware(['auth:api'])->group(function () {
             Route::post('/', [ReservationController::class, 'upSertReservation'])->name('reservation.store');
             Route::post('/update-status', [ReservationController::class, 'updateStatusReservation'])->name('reservation.updateStatus');
             Route::delete('/delete', [ReservationController::class, 'deleteReservation'])->name('reservation.delete');
+        });
+
+        Route::prefix('categories')->group(function () {
+            Route::get('/', [CategoryController::class, 'getCategories'])->name('get.categories');
+        });
+
+        Route::prefix('menus')->group(function () {
+            Route::get('/', [MenusController::class, 'getMenus'])->name('get.menus');
+            Route::post('/', [MenusController::class, 'upSertMenus'])->name('upSert.menus');
         });
 
     });
