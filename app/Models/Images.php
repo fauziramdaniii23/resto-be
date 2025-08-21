@@ -14,10 +14,10 @@ class Images extends Model
         'updated_at',
         'deleted_at',
     ];
-    public function getImageUrlAttribute($value)
-    {
-        return asset('storage/' . $value);
-    }
+//    public function getImageUrlAttribute($value)
+//    {
+//        return asset('storage/' . $value);
+//    }
     public function menus()
     {
         return $this->belongsTo(Menus::class, 'menu_id');

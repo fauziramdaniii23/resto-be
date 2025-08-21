@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Helper\ApiResponse;
-use App\Models\Menus;
 use App\Repositories\MenusRepository;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -62,17 +62,25 @@ class MenusController extends Controller
             DB::beginTransaction();
             $menu = $this->menusRepository->upSertMenus($validated);
             if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                    $path = $file->store('menus', 'public');
-                    $menu->images()->create([
-                        'image_url' => $path
-                    ]);
+                $uploadedFile = $request->file('image');
+                $cloudinary = new Cloudinary();
+                $uploadResult = $cloudinary->uploadApi()->upload(
+                    $uploadedFile->getRealPath(),
+                    ['folder' => 'laravel/resto/menus']
+                );
+                $uploadedFileUrl = $uploadResult['secure_url'] ?? null;
+                $cloudImageId = $uploadResult['public_id'] ?? null;
+                $menu->images()->create([
+                    'image_url' => $uploadedFileUrl,
+                    'cloud_id' => $cloudImageId,
+                ]);
             }
 
             DB::commit();
             return ApiResponse::BaseResponse($menu->load('images'), 'Menu saved successfully');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             $message = $e->getMessage();
             return ApiResponse::ErrorResponse($message, $message);
         }
