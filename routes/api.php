@@ -63,6 +63,7 @@ Route::middleware(['auth:api'])->group(function () {
 
         Route::prefix('menus')->group(function () {
             Route::get('/', [MenusController::class, 'getMenus'])->name('get.menus');
+            Route::get('/id', [MenusController::class, 'getMenusById'])->name('get.menus.by.id');
             Route::post('/', [MenusController::class, 'upSertMenus'])->name('upSert.menus');
         });
 

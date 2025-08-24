@@ -48,6 +48,20 @@ class MenusController extends Controller
         }
     }
 
+    public function getMenusById(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'id' => 'required|integer|exists:menus,id',
+            ]);
+            $menu = $this->menusRepository->getMenusById($validated['id']);
+            return ApiResponse::BaseResponse($menu, 'Menu retrieved successfully');
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+            return ApiResponse::ErrorResponse($message, $message);
+        }
+    }
+
     public function upSertMenus(Request $request): JsonResponse
     {
         try {

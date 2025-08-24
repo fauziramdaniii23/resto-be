@@ -43,6 +43,17 @@ class MenusRepository
             throw new \Exception("GetDataMenus error: " . $e->getMessage());
         }
     }
+
+    public function getMenusById($id)
+    {
+        try {
+            $menu = Menus::with('categories', 'images')->findOrFail($id);
+            return $menu;
+        } catch (\Exception $e) {
+            \Log::error("GetMenusById error: " . $e->getMessage());
+            throw new \Exception("GetMenusById error: " . $e->getMessage());
+        }
+    }
     public function upSertMenus(array $data)
     {
         try {
@@ -52,8 +63,7 @@ class MenusRepository
                     'name' => $data['name'],
                     'price' => $data['price'],
                     'category_id' => $data['category_id'],
-                    'description' => $data['description'],
-                    'image' => $data['image'] ?? null,
+                    'description' => $data['description']
                 ]);
             } else {
                 $menu = Menus::create($data);
